@@ -13,7 +13,7 @@ app.use(express.json());
 const allowedOrigins = ['https://arivutesting33.netlify.app']; // Add your frontend URL
 
 app.use(cors({
-  origin: allowedOrigins,
+  oorigin: "https://arivutesting33.netlify.app",
   methods: ['GET', 'POST', 'OPTIONS'],  // Allow OPTIONS for preflight
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -45,7 +45,7 @@ const feedbackSchema = new mongoose.Schema({
 });
 
 const Feedback = mongoose.model('Feedback', feedbackSchema);
-
+app.use(cors({ origin: "*" })); 
 // API Routes
 app.post('/send-feedback', async (req, res) => {
   try {
