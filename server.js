@@ -9,13 +9,18 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(express.json());
 
-// CORS Configuration
-const allowedOrigins = ['https://arivutesting33.netlify.app']; // Add allowed frontend URLs
+// Fix CORS issues
+const allowedOrigins = ['https://arivutesting33.netlify.app']; // Add your frontend URL
+
 app.use(cors({
   origin: allowedOrigins,
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type']
+  methods: ['GET', 'POST', 'OPTIONS'],  // Allow OPTIONS for preflight
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
+
+// Handle preflight requests
+app.options('*', cors()); 
 
 // MongoDB Connection
 async function connectDB() {
@@ -27,12 +32,12 @@ async function connectDB() {
     console.log('✅ MongoDB Connected');
   } catch (error) {
     console.error('❌ MongoDB Connection Error:', error.message);
-    process.exit(1); // Exit if MongoDB connection fails
+    process.exit(1);
   }
 }
 connectDB();
 
-// Feedback Schema & Model
+// Feedback Schema
 const feedbackSchema = new mongoose.Schema({
   name: { type: String, required: true },
   number: { type: String, required: true },
@@ -42,8 +47,6 @@ const feedbackSchema = new mongoose.Schema({
 const Feedback = mongoose.model('Feedback', feedbackSchema);
 
 // API Routes
-
-// Send feedback (POST)
 app.post('/send-feedback', async (req, res) => {
   try {
     const { name, number, message } = req.body;
@@ -59,7 +62,6 @@ app.post('/send-feedback', async (req, res) => {
   }
 });
 
-// Get feedback by number (GET)
 app.get('/get-feedback/:number', async (req, res) => {
   try {
     const feedbacks = await Feedback.find({ number: req.params.number });
@@ -72,12 +74,10 @@ app.get('/get-feedback/:number', async (req, res) => {
   }
 });
 
-// Default route
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
-// Server Listening
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
