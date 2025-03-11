@@ -76,6 +76,7 @@ app.get('/get-feedback/:number', async (req, res) => {
 
 app.get('/', (req, res) => {
   res.send('API is running...');
+  console.log(`🚀 Server running on port ${PORT}`)
 });
 
 app.listen(PORT, '0.0.0.0', () => {
