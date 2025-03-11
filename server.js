@@ -8,21 +8,35 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+
+// CORS Configuration
+const allowedOrigins = ['https://arivutesting33.netlify.app']; // Add allowed frontend URLs
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type']
+}));
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB Connected'))
-.catch(err => console.error(err));
+async function connectDB() {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('✅ MongoDB Connected');
+  } catch (error) {
+    console.error('❌ MongoDB Connection Error:', error.message);
+    process.exit(1); // Exit if MongoDB connection fails
+  }
+}
+connectDB();
 
-// Feedback Schema
+// Feedback Schema & Model
 const feedbackSchema = new mongoose.Schema({
-  name: String,
-  number: String,
-  message: String
+  name: { type: String, required: true },
+  number: { type: String, required: true },
+  message: { type: String, required: true }
 });
 
 const Feedback = mongoose.model('Feedback', feedbackSchema);
@@ -31,8 +45,12 @@ const Feedback = mongoose.model('Feedback', feedbackSchema);
 
 // Send feedback (POST)
 app.post('/send-feedback', async (req, res) => {
-  const { name, number, message } = req.body;
   try {
+    const { name, number, message } = req.body;
+    if (!name || !number || !message) {
+      return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+    
     const feedback = new Feedback({ name, number, message });
     await feedback.save();
     res.json({ success: true, message: 'Feedback submitted successfully!' });
@@ -45,7 +63,7 @@ app.post('/send-feedback', async (req, res) => {
 app.get('/get-feedback/:number', async (req, res) => {
   try {
     const feedbacks = await Feedback.find({ number: req.params.number });
-    if (feedbacks.length === 0) {
+    if (!feedbacks.length) {
       return res.status(404).json({ success: false, message: 'No feedback found' });
     }
     res.json({ success: true, feedbacks });
@@ -54,7 +72,12 @@ app.get('/get-feedback/:number', async (req, res) => {
   }
 });
 
+// Default route
+app.get('/', (req, res) => {
+  res.send('API is running...');
+});
+
 // Server Listening
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
