@@ -9,22 +9,25 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(express.json());
 
-// Fix CORS issues
-const allowedOrigins = ['https://arivutesting33.netlify.app']; // Add your frontend URL
-
+// ✅ Fix CORS issues
+const allowedOrigins = ['https://arivutesting33.netlify.app'];
 app.use(cors({
-  oorigin: "https://arivutesting33.netlify.app",
-  methods: ['GET', 'POST', 'OPTIONS'],  // Allow OPTIONS for preflight
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'], // ✅ Fixing CORS issue
   credentials: true
 }));
 
-// Handle preflight requests
-app.options('*', cors()); 
+// ✅ Handle preflight requests globally
+app.options('*', cors());
 
-// MongoDB Connection
+// ✅ MongoDB Connection
 async function connectDB() {
   try {
+    if (!process.env.MONGO_URI) {
+      throw new Error("MONGO_URI is missing in .env file");
+    }
+
     await mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -37,7 +40,7 @@ async function connectDB() {
 }
 connectDB();
 
-// Feedback Schema
+// ✅ Feedback Schema
 const feedbackSchema = new mongoose.Schema({
   name: { type: String, required: true },
   number: { type: String, required: true },
@@ -45,40 +48,52 @@ const feedbackSchema = new mongoose.Schema({
 });
 
 const Feedback = mongoose.model('Feedback', feedbackSchema);
-app.use(cors({ origin: "*" })); 
-// API Routes
+
+// ✅ API to Submit Feedback
 app.post('/send-feedback', async (req, res) => {
   try {
     const { name, number, message } = req.body;
     if (!name || !number || !message) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
     }
-    
+
     const feedback = new Feedback({ name, number, message });
     await feedback.save();
     res.json({ success: true, message: 'Feedback submitted successfully!' });
   } catch (error) {
+    console.error('❌ Error saving feedback:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.get('/get-feedback/:number', async (req, res) => {
+// ✅ API to Get Feedback by BOTH Name & Number
+app.get('/get-feedback', async (req, res) => {
   try {
-    const feedbacks = await Feedback.find({ number: req.params.number });
+    const { name, number } = req.query; 
+    if (!name || !number) {
+      return res.status(400).json({ success: false, message: 'Both name and number are required' });
+    }
+
+    console.log(`🔍 Fetching feedback for: Name=${name}, Number=${number}`);
+
+    const feedbacks = await Feedback.find({ name, number });
     if (!feedbacks.length) {
       return res.status(404).json({ success: false, message: 'No feedback found' });
     }
+
     res.json({ success: true, feedbacks });
   } catch (error) {
+    console.error('❌ Error fetching feedback:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
+// ✅ Root route
 app.get('/', (req, res) => {
-  res.send('API is running...');
-  console.log(`🚀 Server running on port ${PORT}`)
+  res.send('🚀 API is running...');
 });
 
+// ✅ Start the server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
