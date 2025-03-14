@@ -14,7 +14,7 @@ const allowedOrigins = ['https://arivutesting33.netlify.app'];
 app.use(cors({
   origin: allowedOrigins,
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'], // ✅ Fixing CORS issue
+  allowedHeaders: ['Content-Type', 'Authorization'], // ✅ Fixing CORS issue
   credentials: true
 }));
 
